@@ -12,26 +12,41 @@ services:
     networks:
       - logging
   # index, search & agregation
-  elasticsearch:
+  elasticsearch1:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.3.0
-    container_name: elastic
+    container_name: elasticsearch1
     environment:
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       # disable X-Pack
       # see https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
       #     https://www.elastic.co/guide/en/x-pack/current/installing-xpack.html#xpack-enabling
       # xpack.security.enabled: "false"
       # xpack.monitoring.enabled: "false"
       # xpack.graph.enabled: "false"
-      # xpack.watcher.enabled: "false"      
+      # xpack.watcher.enabled: "false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 1g
+    cap_add:
+      - IPC_LOCK
     ports:
       - 9200:9200
       - 9300:9300
     volumes:
       - $PWD/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - "es-data:/usr/share/elasticsearch/data"
+      - "es-data1:/usr/share/elasticsearch/data"
     networks:
       - logging
+
+
+
   # UI
   kibana:
     image: docker.elastic.co/kibana/kibana:5.3.0
@@ -43,7 +58,7 @@ services:
     networks:
       - logging
     depends_on:
-      - elasticsearch
+      - elasticsearch1
   # indexer
   logstash:
     image: docker.elastic.co/logstash/logstash:5.3.0
@@ -60,7 +75,7 @@ services:
       - redis
 
 volumes:
-  es-data:
+  es-data1:
     driver: local
   redis-data:
     driver: local
